@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pizzaria Ludmila</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .section {
+            display: none;
+        }
+        .section.ativo {
+            display: block;
+        }
+        .categoria-menu {
+            margin-bottom: 20px;
+        }
+        .item-carrinho {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .resumo-carrinho {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Cardápio Pizzaria Ludmila</h1>
+
+<div id="secao-menu" class="section ativo">
+    <h2>Selecione os itens desejados:</h2>
+
+    <div class="categoria-menu">
+        <h3>Pizzas</h3>
+        <label><input type="checkbox" data-nome="Pizza Margherita" data-preco="25.00"> Pizza Margarita - R$ 25,00</label><br>
+        <label><input type="checkbox" data-nome="Pizza Calabresa" data-preco="30.00"> Pizza Calabresa - R$ 30,00</label><br>
+    </div>
+
+    <div class="categoria-menu">
+        <h3>Sobremesas</h3>
+        <label><input type="checkbox" data-nome="Sorvete" data-preco="10.00"> Sorvete - R$ 10,00</label><br>
+        <label><input type="checkbox" data-nome="Brownie" data-preco="12.00"> Brownie - R$ 12,00</label><br>
+    </div>
+
+    <div class="categoria-menu">
+        <h3>Bebidas</h3>
+        <label><input type="checkbox" data-nome="Refrigerante" data-preco="5.00"> Refrigerante - R$ 5,00</label><br>
+        <label><input type="checkbox" data-nome="Água" data-preco="3.00"> Água - R$ 3,00</label><br>
+    </div>
+
+    <button onclick="mostrarCarrinho()">Ir para o carrinho</button>
+</div>
+
+<div id="secao-carrinho" class="section">
+    <h2>Carrinho de Compras</h2>
+    <div id="itens-carrinho"></div>
+    <div class="resumo-carrinho">
+        <strong>Total: R$ <span id="total-carrinho">0.00</span></strong>
+    </div>
+    <button onclick="adicionarMaisItens()">Adicionar mais itens</button>
+    <button onclick="mostrarPagamento()">Finalizar Pedido</button>
+</div>
+
+<div id="secao-pagamento" class="section">
+    <h2>Finalizar Pedido</h2>
+    <p>Escolha a forma de pagamento:</p>
+    <label><input type="radio" name="pagamento" value="Cartão" checked> Cartão (débito ou crédito)</label><br>
+    <label><input type="radio" name="pagamento" value="Pix"> Pix</label><br><br>
+
+    <label>Nome completo: <input type="text" id="nome-cliente"></label><br>
+    <label>Endereço para entrega: <input type="text" id="endereco-cliente"></label><br><br>
+
+    <h3>Resumo do Pedido</h3>
+    <div id="resumo-pedido"></div>
+
+    <button onclick="confirmarPedido()">Confirmar Pedido</button>
+    <button onclick="cancelarPedido()">Cancelar Pedido</button>
+</div>
+
+<script>
+    const secaoMenu = document.getElementById('secao-menu');
+    const secaoCarrinho = document.getElementById('secao-carrinho');
+    const secaoPagamento = document.getElementById('secao-pagamento');
+    const itensCarrinhoContainer = document.getElementById('itens-carrinho');
+    const totalCarrinhoElement = document.getElementById('total-carrinho');
+    const resumoPedidoContainer = document.getElementById('resumo-pedido');
+    
+    let itensCarrinho = [];
+
+    function mostrarCarrinho() {
+        itensCarrinho = [];
+        document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+            itensCarrinho.push({ 
+                nome: checkbox.getAttribute('data-nome'), 
+                preco: parseFloat(checkbox.getAttribute('data-preco')), 
+                quantidade: 1 
+            });
+        });
+        atualizarCarrinho();
+        secaoMenu.classList.remove('ativo');
+        secaoCarrinho.classList.add('ativo');
+    }
+    function adicionarMaisItens() {
+        secaoCarrinho.classList.remove('ativo');
+        secaoMenu.classList.add('ativo');
+    }
+    function mostrarPagamento() {
+        atualizarResumoPedido();
+        secaoCarrinho.classList.remove('ativo');
+        secaoPagamento.classList.add('ativo');
+    }
+    function atualizarCarrinho() {
+        itensCarrinhoContainer.innerHTML = '';
+        let total = 0;
+
+        itensCarrinho.forEach((item, index) => {
+            total += item.preco * item.quantidade;
+            itensCarrinhoContainer.innerHTML += `
+                <div class="item-carrinho">
+                    <span>${item.nome} (R$ ${item.preco.toFixed(2)})</span>
+                    <input type="number" value="${item.quantidade}" min="1" onchange="atualizarQuantidade(${index}, this.value)">
+                </div>
+            `;
+        });
+        totalCarrinhoElement.textContent = total.toFixed(2);
+    }
+    function atualizarQuantidade(index, quantidade) {
+        itensCarrinho[index].quantidade = parseInt(quantidade);
+        atualizarCarrinho();
+    }
+    function atualizarResumoPedido() {
+        resumoPedidoContainer.innerHTML = '';
+        let total = 0;
+
+        itensCarrinho.forEach(item => {
+            total += item.preco * item.quantidade;
+            resumoPedidoContainer.innerHTML += `<div>${item.quantidade}x ${item.nome} - R$ ${(item.preco * item.quantidade).toFixed(2)}</div>`;
+        });
+        resumoPedidoContainer.innerHTML += `<div><strong>Total: R$ ${total.toFixed(2)}</strong></div>`;
+    }
+    function confirmarPedido() {
+        const nome = document.getElementById('nome-cliente').value;
+        const endereco = document.getElementById('endereco-cliente').value;
+        const pagamento = document.querySelector('input[name="pagamento"]:checked').value;
+        if (nome && endereco) {
+            alert(`Pedido confirmado!\n\nNome: ${nome}\nEndereço: ${endereco}\nPagamento: ${pagamento}\n\nObrigado por comprar conosco!`);
+        } else {
+            alert('Por favor, preencha todos os campos obrigatórios.');
+        }
+    }
+    function cancelarPedido() {
+        if (confirm('Tem certeza que deseja cancelar o pedido?')) {
+            itensCarrinho = [];
+            secaoCarrinho.classList.remove('ativo');
+            secaoPagamento.classList.remove('ativo');
+            secaoMenu.classList.add('ativo');
+        }
+    }
+</script>
+</body>
+</html>
